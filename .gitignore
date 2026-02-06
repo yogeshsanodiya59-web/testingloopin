@@ -1,0 +1,7 @@
+backend/firebase-credentials.json
+node_modules/
+.env
+.DS_Store
+.next/
+build/
+dist/
