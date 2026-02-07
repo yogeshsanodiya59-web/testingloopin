@@ -36,9 +36,8 @@ services:
     region: singapore
     plan: free
     rootDir: frontend
-    # Build command: install deps, build, and copy static files for standalone
-    buildCommand: npm install && npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
-    startCommand: node .next/standalone/server.js
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     envVars:
       - key: NODE_VERSION
         value: 20.11.0
