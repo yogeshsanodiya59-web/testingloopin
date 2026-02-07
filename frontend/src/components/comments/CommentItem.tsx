@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createComment, toggleReaction } from '@/lib/api';
+import { createComment, toggleReaction, voteComment } from '@/lib/api';
 import CommentForm from './CommentForm';
 import ReactionPicker from '@/components/common/ReactionPicker';
 
@@ -17,9 +17,12 @@ interface CommentItemProps {
 export default function CommentItem({ comment, postId, depth = 0, currentUserId, onReplySuccess }: CommentItemProps) {
     const [isReplying, setIsReplying] = useState(false);
     const [reactions, setReactions] = useState(comment.reactions || []);
+    const [upvotes, setUpvotes] = useState(comment.upvotes || 0);
+    const [downvotes, setDownvotes] = useState(comment.downvotes || 0);
+    const [userVote, setUserVote] = useState<1 | -1 | null>(comment.user_vote || null);
 
-    const handleReply = async (content: string) => {
-        await createComment(postId, content, comment.id);
+    const handleReply = async (content: string, isAnonymous: boolean) => {
+        await createComment(postId, content, comment.id, isAnonymous);
         setIsReplying(false);
         onReplySuccess();
     };
@@ -66,9 +69,39 @@ export default function CommentItem({ comment, postId, depth = 0, currentUserId,
         }
     };
 
+    const handleVote = async (voteType: 1 | -1) => {
+        try {
+            // Optimistic update
+            const previousVote = userVote;
+
+            if (userVote === voteType) {
+                // Toggling off
+                setUserVote(null);
+                if (voteType === 1) setUpvotes((prev: number) => prev - 1);
+                else setDownvotes((prev: number) => prev - 1);
+            } else {
+                // Changing vote or new vote
+                if (previousVote === 1) setUpvotes((prev: number) => prev - 1);
+                if (previousVote === -1) setDownvotes((prev: number) => prev - 1);
+
+                setUserVote(voteType);
+                if (voteType === 1) setUpvotes((prev: number) => prev + 1);
+                else setDownvotes((prev: number) => prev + 1);
+            }
+
+            await voteComment(comment.id, voteType);
+        } catch (error) {
+            console.error("Failed to vote on comment", error);
+            // Revert on error
+            setUpvotes(comment.upvotes || 0);
+            setDownvotes(comment.downvotes || 0);
+            setUserVote(comment.user_vote || null);
+        }
+    };
     const isAuthor = currentUserId && comment.author_id === currentUserId;
-    const authorName = comment.author?.full_name || 'Anonymous Student';
-    const authorRole = comment.author?.role || 'student';
+    const isAnonymous = comment.is_anonymous;
+    const authorName = isAnonymous ? 'Anonymous' : (comment.author?.full_name || 'Unknown User');
+    const authorRole = isAnonymous ? '' : (comment.author?.role || 'student');
 
     return (
         <div className={`mt-4 ${depth > 0 ? 'ml-8 sm:ml-12 border-l-2 border-slate-100 dark:border-slate-800 pl-4' : ''}`}>
@@ -103,6 +136,34 @@ export default function CommentItem({ comment, postId, depth = 0, currentUserId,
 
                     {/* Footer Actions */}
                     <div className="flex items-center gap-4 mt-2">
+                        {/* Vote Buttons */}
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => handleVote(1)}
+                                className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${userVote === 1
+                                        ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
+                                        : 'text-slate-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
+                                    }`}
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                </svg>
+                                {upvotes > 0 && <span>{upvotes}</span>}
+                            </button>
+                            <button
+                                onClick={() => handleVote(-1)}
+                                className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${userVote === -1
+                                        ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                                        : 'text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'
+                                    }`}
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                                {downvotes > 0 && <span>{downvotes}</span>}
+                            </button>
+                        </div>
+
                         <button
                             onClick={() => setIsReplying(!isReplying)}
                             className="text-xs font-medium text-slate-500 hover:text-blue-600 transition-colors"

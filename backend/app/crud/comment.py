@@ -8,7 +8,8 @@ def create_comment(db: Session, comment: CommentCreate, post_id: int, author_id:
         content=comment.content,
         post_id=post_id,
         author_id=author_id,
-        parent_id=parent_id
+        parent_id=parent_id,
+        is_anonymous=comment.is_anonymous
     )
     db.add(db_comment)
     db.commit()

@@ -68,8 +68,8 @@ export default function CommentSection({ postId, initialCount = 0, currentUserId
         }
     }, [isOpen, fetchComments]);
 
-    const handleAddComment = async (content: string) => {
-        await createComment(postId, content);
+    const handleAddComment = async (content: string, isAnonymous: boolean) => {
+        await createComment(postId, content, undefined, isAnonymous);
         fetchComments(); // Refresh list
     };
 

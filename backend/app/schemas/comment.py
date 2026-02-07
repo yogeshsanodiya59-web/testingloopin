@@ -7,7 +7,7 @@ class CommentBase(BaseModel):
     content: str
     
 class CommentCreate(CommentBase):
-    pass
+    is_anonymous: bool = False
 
 class CommentUpdate(CommentBase):
     pass
@@ -18,6 +18,7 @@ class Comment(CommentBase):
     author_id: Optional[int]
     parent_id: Optional[int]
     created_at: datetime
+    is_anonymous: bool = False
     
     # We will compute these or fetch them
     replies: List['Comment'] = []

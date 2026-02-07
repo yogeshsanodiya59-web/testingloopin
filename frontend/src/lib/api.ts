@@ -122,15 +122,27 @@ export const getComments = async (postId: number) => {
   return response.data;
 };
 
-export const createComment = async (postId: number, content: string, parentId?: number) => {
+export const createComment = async (postId: number, content: string, parentId?: number, isAnonymous: boolean = false) => {
+  const params: Record<string, any> = {};
+  if (parentId) params.parent_id = parentId;
+
   const response = await api.post(`/posts/${postId}/comments/`, {
-    content
-  });
+    content,
+    is_anonymous: isAnonymous
+  }, { params });
   return response.data;
 };
 
 export const deleteComment = async (postId: number, commentId: number) => {
   const response = await api.delete(`/posts/${postId}/comments/${commentId}`);
+  return response.data;
+};
+
+export const voteComment = async (commentId: number, voteType: 1 | -1) => {
+  const response = await api.post(`/vote`, {
+    comment_id: commentId,
+    vote_type: voteType
+  });
   return response.data;
 };
 
