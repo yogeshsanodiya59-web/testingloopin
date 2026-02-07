@@ -36,7 +36,8 @@ async def lifespan(app: FastAPI):
     """
     # Startup
     logger.info("Starting application...")
-    logger.info(f"Database URL: {settings.DATABASE_URL.split('@')[1]}")  # Don't log password
+    db_url_log = settings.DATABASE_URL.split('@')[1] if '@' in settings.DATABASE_URL else settings.DATABASE_URL
+    logger.info(f"Database URL: {db_url_log}")
     
     try:
         # Initialize database

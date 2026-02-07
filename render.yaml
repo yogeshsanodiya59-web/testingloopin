@@ -20,6 +20,13 @@ services:
       - key: BACKEND_CORS_ORIGINS
         sync: false 
         # Set to your frontend URL, e.g. https://loop-frontend.onrender.com
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+        # Set to your frontend callback URL, e.g. https://loop-frontend.onrender.com/auth/callback
     autoDeploy: true
 
   # Frontend Service (Next.js)
@@ -29,9 +36,9 @@ services:
     region: singapore
     plan: free
     rootDir: frontend
-    # Build command needs to handle installing dependencies
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    # Build command: install deps, build, and copy static files for standalone
+    buildCommand: npm install && npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
+    startCommand: node .next/standalone/server.js
     envVars:
       - key: NODE_VERSION
         value: 20.11.0

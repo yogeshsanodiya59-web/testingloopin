@@ -30,13 +30,17 @@ def init_db(database_url: str) -> None:
     """
     global engine, SessionLocal
     
+    connect_args = {}
+    if "sqlite" in database_url:
+        connect_args = {"check_same_thread": False}
+        
     # Create engine with connection pooling
     engine = create_engine(
         database_url,
-        pool_pre_ping=True,  # Verify connections before using
-        pool_size=5,         # Max connections in pool
-        max_overflow=10,     # Max extra connections
-        echo=False,          # Set to True for SQL logging
+        pool_pre_ping=True,
+        # pool_size/max_overflow are ignored by SQLite or can be omitted if causing issues
+        echo=False,
+        connect_args=connect_args
     )
     
     # Create session factory
